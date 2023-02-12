@@ -10,12 +10,15 @@
 #   2- Check if passwords are empty
 #   3- Resolve PIKAUR pgp key failures (pacman-key might solve it)
 #   4- Configuration for laptop
+#   5- Flameshot might need autostart file
+#   6- Startup systemd msgs
 
 
 ### Global Variables ###
 device=0  # 1:PC , 2:Laptop
 requirements=(sudo base-devel git ntp)
-dotfiles="git@github.com:arsanysamuel/dotfiles.git"
+dotfilesrepo="git@github.com:arsanysamuel/dotfiles.git"
+cocplugins=(html css json lua vimtex sh tsserver json snippets markdownlint)
 
 
 # Error handler function
@@ -97,13 +100,16 @@ adduser() {
     useradd -m -g wheel "$username" > /dev/null 2>&1 || usermod -a -G wheel -m -d "$homedir" "$username"
     echo "$username:$pass" | chpasswd
 
-    printf "Configuring for auto login on tty1.\n"
+    printf "\tConfiguring for auto login on tty1...\n"
     mkdir -p "/etc/systemd/system/getty@tty1.service.d/"
     printf "[Service]\nExecStart=\nExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $username %I $TERM" > /etc/systemd/system/getty@tty1.service.d/autologin.conf
     printf "[Service]\nTTYVTDisallocate=no" > /etc/systemd/system/getty@tty1.service.d/noclear.conf  # Prevents systemd from clearing screen
 
-    printf "Configuring sudoers\n"
+    printf "\tConfiguring sudoers...\n"
     sed -i "/wheel.*NOPASSWD/s/#\ //" /etc/sudoers || return 1  # Could do with awk
+
+    printf "\tCreating home directory folders...\n"
+    sudo -u $username mkdir -p $homedir/dls/ $homedir/docs/ $homedir/unsorted
 
     printf "\nUser configured successfully\n"
 }
@@ -125,7 +131,7 @@ pacmanconfig() {
 # Install AUR helper (PIKAUR)
 installaurhelper() {
     printf "\nInstalling PIKAUR\n"
-    sudo -u $username git clone https://aur.archlinux.org/pikaur.git || printf "Couldn't clone the repo\n"; return 1
+    sudo -u $username git -C "$homedir" clone -q --depth 1 --no-tags https://aur.archlinux.org/pikaur.git || printf "Couldn't clone the repo\n"; return 1
     cd pikaur
     sudo -u $username makepkg -fsri > /dev/null 2>&1 || printf "PIKAUR failed to compile and install\n"; return 1
     cd ..
@@ -138,11 +144,11 @@ installaurhelper() {
 # Deploy Dotfiles
 deploydotfiles() {
     printf "\nDeploying dotfiles...\n"
-    sudo -u $username git clone --bare git@github.com:arsanysamuel/dotfiles.git $HOME/.dotfiles
-    sudo -u $username git --work-tree=$HOME --git-dir=$HOME/.dotfiles/ checkout -f
+    sudo -u $username git -C "$homedir" clone -q --bare $dotfilesrepo $homedir/.dotfiles
+    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ checkout -f
     rm -f LICENSE README.md
-    sudo -u $username git --work-tree=$HOME --git-dir=$HOME/.dotfiles/ update-index --skip-worktree LICENSE README.md
-    sudo -u $username git --work-tree=$HOME --git-dir=$HOME/.dotfiles/ config --local status.showUntrackedFiles no
+    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree LICENSE README.md
+    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ config --local status.showUntrackedFiles no
 }
 
 # Install packages from pkglist.txt
@@ -161,25 +167,85 @@ installpkglist() {
 
 # Configure every package in the list according to its arch wiki page
 configpkgs() {
-    printf "\nConfiguring packages. (Check wiki.archlinux.org for every package configuration)\n"
+    printf "\nConfiguring packages:\n"
 
-    # GRUB Theme
+    printf "\tInstalling GRUB Theme...\n"
+    sudo -u $username git -C "$homedir" clone -q https://github.com/Se7endAY/grub2-theme-vimix.git
+    mkdir /boot/grub/themes/  || return 1
+    cp -r grub2-theme-vimix/Vimix/ /boot/grub/themes/
+    rm -rf grub2-theme-vimix
+    printf "\n# User added config\nGRUB_DISABLE_OS_PROBER=false  # detect all OSes\n#GRUB_GFXMODE=1024x768x32  # setting grub resolution\n#GRUB_BACKGROUND='/path/to/wallpaper'\nGRUB_THEME='/boot/grub/themes/Vimix/theme.txt'\nGRUB_COLOR_NORMAL='light-blue/black'\nGRUB_COLOR_HIGHLIGHT='light-cyan/blue'" >> /etc/default/grub
+    sed -i "s/^GRUB_TERMINAL_OUTPUT/#GRUB_TERMINAL_OUTPUT/" /etc/default/grub 
+    grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1 || return 1
+
+    printf "\tEnabling NetworkManager...\n"
+    systemctl enable NetworkManager.service > /dev/null 2>&1
+
+    printf "\tEnabling CUPS socket for printing...\n"
+    systemctl disable cups.service > /dev/null 2>&1
+    systemctl enable cups.socket > /dev/null 2>&1
+
+    printf "\tConfiguring MPD...\n"
+    sudo -u $username mkdir "$homedir/.config/mpd/playlists"
+    sudo -u $username systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
+
+    printf "\tCreating NeoMutt directory...\n"
+    sudo -u $username mkdir "$homedir/dls/email_attachments"
+
+    printf "\tEnabling and configuring Transmission...\n"
+    mkdir -p /etc/systemd/system/transmission.service.d/
+    printf "[Service]\nUser=$username" > /etc/systemd/system/transmission.service.d/username.conf
+    systemctl enable transmission.service > /dev/null 2>&1
+
+    printf "\nPackage configuration done.\n"
+}
+
+# Configuring NeoVim
+configneovim() {
+    printf "\nDeploying NeoVim configuration:\n"
+
+    printf "\tInstalling Providers...\n"
+    sudo -u $username pip --no-input install -U pynvim > /dev/null 2>&1
+    sudo -u $username npm install -g neovim > /dev/null 2>&1
+
+    printf "\tInstalling VimPlug...\n"
+    sudo -u $username sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim' > /dev/null 2>&1
+
+    printf "\tInstalling Plugins...\n"
+    sudo -u $username nvim -c "PlugInstall|UpdateRemotePlugins|PlugUpdate|qall"
+
+    printf "\tInstalling CocPlugins...\n"
+    for plg in $cocplugins; do
+        printf "\t\tInstalling coc-$plug...\n"
+        sudo -u $username nvim +"CocInstall -sync coc-$plg" +"qall"
+    done
 }
 
 
 ### Main Script ###
 welcome || error "User exited."
+
 getuserinfo || error "User exited."
 
 printf "\nThe script will proceed to bootstrap the system fully automated without any more input required from you, this may take some time.\n\nPress any key to continue..."
 read -s -n 1
 
-installrequirements
 adduser || error "Error has occurred while adding/modifying user."
+
+# Use all CPU cores for compilation
+sed -i "s/-j2/-j$(nproc)/;/#MAKEFLAGS/s/^#//" /etc/makepkg.conf
+
 pacmanconfig
+installrequirements
 installaurhelper || error "Failed to install PIKAUR"
-deploydotfiles || error "Failed to deploy .dotfiles"
 installpkglist || error "Failed to install a package, check the logs and try again."
 
-printf "\nFinished\n"
+deploydotfiles || error "Failed to deploy .dotfiles"
+configpkgs || error "Failed to configure this package."
+configneovim || error "Failed to deploy neovim configuration."
+
+# Allow dmesg access for all users
+printf "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
+
 
