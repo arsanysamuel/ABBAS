@@ -1,5 +1,5 @@
 # arch-bootstrapper
-Bootstrapping script for a fresh ArchLinux installation.
+Bootstrapping script for a fresh Arch Linux installation.
 
 ### Usage
 1. Install Arch Linux by following the [installation guide](https://wiki.archlinux.org/title/Installation_guide).
@@ -10,3 +10,13 @@ Bootstrapping script for a fresh ArchLinux installation.
     curl -O https://raw.githubusercontent.com/arsanysamuel/arch-bootstrapper/main/bootstrap.sh &&
     ./bootstrap.sh
     ```
+
+
+### Resources
+- [archlinux wiki](https://wiki.archlinux.org/)
+- [pikaur](https://github.com/actionless/pikaur)
+- [dwm](https://github.com/arsanysamuel/dwm)
+- [st](https://github.com/arsanysamuel/st)
+- [dmenu](https://github.com/arsanysamuel/dmenu)
+- [dotfiles](https://github.com/arsanysamuel/dotfiles)
+- [LARBS](https://larbs.xyz/)
