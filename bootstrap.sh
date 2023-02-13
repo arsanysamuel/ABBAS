@@ -147,8 +147,9 @@ deploydotfiles() {
     sudo -u $username git -C "$homedir" clone -q --bare $dotfilesrepo $homedir/.dotfiles
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ checkout -f
     rm -f LICENSE README.md
-    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree LICENSE README.md
+    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree -q LICENSE README.md
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ config --local status.showUntrackedFiles no
+    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule update -q --init --recursive
 }
 
 # Install packages from pkglist.txt
