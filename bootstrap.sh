@@ -18,6 +18,7 @@
 device=0  # 1:PC , 2:Laptop
 requirements=(sudo base-devel git ntp)
 dotfilesrepo="git@github.com:arsanysamuel/dotfiles.git"
+suckless=(dwm dmenu st)
 cocplugins=(html css json lua vimtex sh tsserver json snippets markdownlint)
 
 
@@ -150,6 +151,7 @@ deploydotfiles() {
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree -q LICENSE README.md
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ config --local status.showUntrackedFiles no
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule update -q --init --recursive
+    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule -q foreach git pull -q origin master
 }
 
 # Install packages from pkglist.txt
@@ -223,6 +225,21 @@ configneovim() {
     done
 }
 
+# Compile and install from source (used for suckless utilities)
+makeinstallsource() {
+    printf "\t$1...\n"
+    cd $homedir/.config/$1
+    sudo -u $username make > /dev/null 2>&1 || return 1
+    make clean install > /dev/null 2>&1 || return 1
+}
+
+# Finalize installation
+finalize() {
+    printf "\nBootstrapping script has completed successfully, provided there were no hidden errors.\nAll packages have been installed and configured, please reboot the system to complete the installation.\n\nDo you want to reboot now [Y/n]? "
+    read -r
+    ! [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] || reboot
+}
+
 
 ### Main Script ###
 welcome || error "User exited."
@@ -249,4 +266,10 @@ configneovim || error "Failed to deploy neovim configuration."
 # Allow dmesg access for all users
 printf "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
 
+printf "\nBuilding and installing suckless tools:\n"
+for t in $suckless; do
+    makeinstallsource $t || error "Failed to build and install $t"
+done
+
+finalize
 
