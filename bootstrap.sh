@@ -19,7 +19,7 @@ device=0  # 1:PC , 2:Laptop
 requirements=(sudo base-devel git ntp)
 dotfilesrepo="git@github.com:arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
-cocplugins=(html css json lua vimtex sh tsserver json snippets markdownlint)
+cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint)
 
 
 # Error handler function
