@@ -142,6 +142,14 @@ installaurhelper() {
     sudo -u $username gpg --keyserver keys.openpgp.org --recv-keys E53D989A9E2D47BF > /dev/null 2>&1
 }
 
+# Configure git globally
+configgit() {
+    sudo -u $username git config --global merge.tool nvimdiff
+    sudo -u $username git config --global merge.conflictstyle diff3
+    sudo -u $username git config --global mergetool.prompt false
+    sudo -u $username git config --global color.ui auto
+}
+
 # Deploy Dotfiles
 deploydotfiles() {
     printf "\nDeploying dotfiles...\n"
@@ -229,15 +237,15 @@ configneovim() {
 makeinstallsource() {
     printf "\t$1...\n"
     cd $homedir/.config/$1
-    sudo -u $username make > /dev/null 2>&1 || return 1
-    make clean install > /dev/null 2>&1 || return 1
+    sudo -u $username make
+    make clean install
 }
 
 # Finalize installation
 finalize() {
-    printf "\nBootstrapping script has completed successfully, provided there were no hidden errors.\nAll packages have been installed and configured, please reboot the system to complete the installation.\n\nDo you want to reboot now [Y/n]? "
+    printf "\nBootstrapping script has completed successfully, provided there were no hidden errors.\nAll packages have been installed and configured, please reboot the system to complete the installation.\nDo you want to reboot now [Y/n]? "
     read -r
-    ! [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] || reboot
+    [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] && echo reboot
 }
 
 
@@ -259,6 +267,7 @@ installrequirements
 installaurhelper || error "Failed to install PIKAUR"
 installpkglist || error "Failed to install a package, check the logs and try again."
 
+configgit
 deploydotfiles || error "Failed to deploy .dotfiles"
 configpkgs || error "Failed to configure this package."
 configneovim || error "Failed to deploy neovim configuration."
@@ -268,8 +277,7 @@ printf "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
 
 printf "\nBuilding and installing suckless tools:\n"
 for t in $suckless; do
-    makeinstallsource $t || error "Failed to build and install $t"
+    makeinstallsource $t
 done
 
 finalize
-
