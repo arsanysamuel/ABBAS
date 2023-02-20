@@ -8,8 +8,10 @@ Bootstrapping script for a fresh Arch Linux installation.
 4. Start the script as root user with the following command:
     ```
     curl -O https://raw.githubusercontent.com/arsanysamuel/arch-bootstrapper/main/bootstrap.sh &&
+    chmod +x bootstrap.sh
     ./bootstrap.sh
     ```
+5. (Optional) Add configuration for your laptop (if running on a laptop) using this [wiki page](https://wiki.archlinux.org/title/Laptop).
 
 
 ### Resources
@@ -20,3 +22,6 @@ Bootstrapping script for a fresh Arch Linux installation.
 - [dmenu](https://github.com/arsanysamuel/dmenu)
 - [dotfiles](https://github.com/arsanysamuel/dotfiles)
 - [LARBS](https://larbs.xyz/)
+
+
+***Disclaimer:*** This script was intended for my personal use to install my package list and deploy my configuration files and builds, if you're looking for more general purpose script try using [LARBS](https://larbs.xyz/) as it supports bootstrapping with other package lists and repos, and this script was heavily inspired by it.
