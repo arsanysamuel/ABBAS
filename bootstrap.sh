@@ -155,9 +155,8 @@ deploydotfiles() {
 
     printf "\tConfiguring SSH...\n"
     cd $homedir
-    #sudo -u $username ssh-keygen -q -A -f $homedir/.ssh/
-    sudo -u $username ssh-keygen -q -N "" -C "" -t rsa -f $homedir/.ssh/id_rsa
-    sudo -u $username ssh-keygen -q -N "" -C "" -t e25519 -f $homedir/.ssh/id_e25519
+    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t rsa -f $homedir/.ssh/id_rsa
+    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t e25519 -f $homedir/.ssh/id_e25519
     sudo -u $username ssh-keyscan github.com >> $homedir/.ssh/known_hosts 2> /dev/null
 
     printf "\tDeploying dotfiles...\n"
