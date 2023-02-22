@@ -166,10 +166,6 @@ deploydotfiles() {
     rm -f LICENSE README.md
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree -q LICENSE README.md
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ config --local status.showUntrackedFiles no
-
-    printf "\tCloning submodules...\n"
-    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule update -q --init --recursive
-    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule -q foreach git pull -q origin master
 }
 
 # Install packages from pkglist.txt
@@ -246,6 +242,8 @@ configneovim() {
 # Compile and install from source (used for suckless utilities)
 makeinstallsource() {
     printf "\t$1...\n"
+    repo="https://github.com/arsanysamuel/$1.git"
+    sudo -u $username git -C "$homedir/.config" clone -q --depth 1 --single-branch --no-tags $repo
     cd $homedir/.config/$1
     sudo -u $username make > /dev/null 2>&1 || return 1
     make clean install > /dev/null 2>&1 || return 1
