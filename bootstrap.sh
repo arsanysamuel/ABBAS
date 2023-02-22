@@ -16,8 +16,8 @@
 
 ### Global Variables ###
 device=0  # 1:PC , 2:Laptop
-requirements=(sudo base-devel git ntp)
-dotfilesrepo="git@github.com:arsanysamuel/dotfiles.git"
+requirements=(sudo base-devel git openssh ntp)
+dotfilesrepo="https://github.com/arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
 cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint)
 
@@ -31,7 +31,7 @@ error() {
 # Welcome message
 welcome() {
     printf "\nStarting Arch Linux Bootstrapping Script...\nBy: Arsany Samuel.\n"
-    printf "\nThe script will do the following:\n\t1- Add a new user account (if not existing).\n\t2- Install AUR helper.\n\t3- Install packages.\n\t4- Configure packages and deploy dotfiles.\n\n"
+    printf "\nThe script will do the following:\n\t1- Add a new user account (or modify if existing).\n\t2- Install AUR helper.\n\t3- Install packages.\n\t4- Configure packages and deploy dotfiles.\n\n"
     read -p "Do you wish to continue [Y/n]? "
     [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] || return 1
 
@@ -40,7 +40,6 @@ welcome() {
         printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
         read -r device
     done
-
 }
 
 # Prompt for user
@@ -91,6 +90,7 @@ installrequirements() {
         pacman -S --noconfirm --needed $pkg > /dev/null 2>&1
     done
 
+    printf "\nConfiguring time using NTP...\n"
     ntpd -g -q > /dev/null 2>&1
 }
 
@@ -99,25 +99,24 @@ adduser() {
     printf "\n\nAdding/Modifying user $username.\n"
     export homedir="/home/$username"
     useradd -m -g wheel "$username" > /dev/null 2>&1 || usermod -a -G wheel -m -d "$homedir" "$username"
-    echo "$username:$pass" | chpasswd
+    echo "$username:$pass" | chpasswd > /dev/null 2>&1 && printf "\tNew password set.\n" || printf "\tPassword unchanged.\n"
 
     printf "\tConfiguring for auto login on tty1...\n"
     mkdir -p "/etc/systemd/system/getty@tty1.service.d/"
-    printf "[Service]\nExecStart=\nExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $username %I $TERM" > /etc/systemd/system/getty@tty1.service.d/autologin.conf
+    echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty -o '-p -f -- \\\\u' --noclear --autologin $username %I $TERM" > /etc/systemd/system/getty@tty1.service.d/autologin.conf
     printf "[Service]\nTTYVTDisallocate=no" > /etc/systemd/system/getty@tty1.service.d/noclear.conf  # Prevents systemd from clearing screen
 
     printf "\tConfiguring sudoers...\n"
     sed -i "/wheel.*NOPASSWD/s/#\ //" /etc/sudoers || return 1  # Could do with awk
 
     printf "\tCreating home directory folders...\n"
-    sudo -u $username mkdir -p $homedir/dls/ $homedir/docs/ $homedir/unsorted
-
-    printf "\nUser configured successfully\n"
+    chown "$username":wheel $homedir > /dev/null 2>&1
+    sudo -u $username mkdir -p $homedir/dls/ $homedir/docs/ $homedir/unsorted $homedir/torrents/incomplete
 }
 
 # Pacman edit configuration
 pacmanconfig() {
-    printf"\nConfiguring pacman by editing /etc/pacman.conf\n"
+    printf "\nConfiguring pacman by editing /etc/pacman.conf\n"
 
     # Editing config file
     sed -i "/Color/s/#//" /etc/pacman.conf
@@ -131,10 +130,11 @@ pacmanconfig() {
 
 # Install AUR helper (PIKAUR)
 installaurhelper() {
-    printf "\nInstalling PIKAUR\n"
-    sudo -u $username git -C "$homedir" clone -q --depth 1 --no-tags https://aur.archlinux.org/pikaur.git || printf "Couldn't clone the repo\n"; return 1
-    cd pikaur
-    sudo -u $username makepkg -fsri > /dev/null 2>&1 || printf "PIKAUR failed to compile and install\n"; return 1
+    printf "\nInstalling PIKAUR...\n"
+    [ -d "$homedir/pikaur" ] && rm -rf "$homedir/pikaur"
+    sudo -u $username git -C "$homedir" clone -q --depth 1 --no-tags https://aur.archlinux.org/pikaur.git || { printf "Couldn't clone the repo\n"; return 1; }
+    cd $homedir/pikaur
+    sudo -u $username makepkg -fsricC --noconfirm --needed > /dev/null 2>&1 || { printf "PIKAUR failed to compile and install\n"; return 1; }
     cd ..
     rm -rf pikaur
 
@@ -152,12 +152,21 @@ configgit() {
 
 # Deploy Dotfiles
 deploydotfiles() {
-    printf "\nDeploying dotfiles...\n"
+    printf "\nDeploying dotfiles:\n"
+
+    printf "\tConfiguring SSH...\n"
+    cd $homedir
+    sudo -u $username ssh-keygen -q -A
+    sudo -u $username ssh-keyscan github.com >> $homedir/.ssh/known_hosts 2> /dev/null
+
+    printf "\tDeploying dotfiles...\n"
     sudo -u $username git -C "$homedir" clone -q --bare $dotfilesrepo $homedir/.dotfiles
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ checkout -f
     rm -f LICENSE README.md
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree -q LICENSE README.md
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ config --local status.showUntrackedFiles no
+
+    printf "\tCloning submodules...\n"
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule update -q --init --recursive
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ submodule -q foreach git pull -q origin master
 }
@@ -262,13 +271,13 @@ adduser || error "Error has occurred while adding/modifying user."
 # Use all CPU cores for compilation
 sed -i "s/-j2/-j$(nproc)/;/#MAKEFLAGS/s/^#//" /etc/makepkg.conf
 
-pacmanconfig
 installrequirements
 installaurhelper || error "Failed to install PIKAUR"
+deploydotfiles || error "Failed to deploy .dotfiles"
 installpkglist || error "Failed to install a package, check the logs and try again."
+pacmanconfig
 
 configgit
-deploydotfiles || error "Failed to deploy .dotfiles"
 configpkgs || error "Failed to configure this package."
 configneovim || error "Failed to deploy neovim configuration."
 
