@@ -79,7 +79,7 @@ getuserinfo() {
 
 # Update the system and install requirements
 installrequirements() {
-    printf "\nRefreshing keys and upgrading...\n"
+    printf "\n\nRefreshing keys and upgrading...\n"
     pacman -Syy --noconfirm archlinux-keyring > /dev/null 2>&1
     pacman -Su --noconfirm --needed > /dev/null 2>&1
     pacman-key --populate archlinux > /dev/null 2>&1
@@ -135,8 +135,7 @@ installaurhelper() {
     sudo -u $username git -C "$homedir" clone -q --depth 1 --no-tags https://aur.archlinux.org/pikaur.git || { printf "Couldn't clone the repo\n"; return 1; }
     cd $homedir/pikaur
     sudo -u $username makepkg -fsricC --noconfirm --needed > /dev/null 2>&1 || { printf "PIKAUR failed to compile and install\n"; return 1; }
-    cd ..
-    rm -rf pikaur
+    rm -rf $homedir/pikaur
 
     # Adding TOR browser pgp key (will resolve later)
     sudo -u $username gpg --keyserver keys.openpgp.org --recv-keys E53D989A9E2D47BF > /dev/null 2>&1
@@ -156,10 +155,13 @@ deploydotfiles() {
 
     printf "\tConfiguring SSH...\n"
     cd $homedir
-    sudo -u $username ssh-keygen -q -A
+    #sudo -u $username ssh-keygen -q -A -f $homedir/.ssh/
+    sudo -u $username ssh-keygen -q -N "" -C "" -t rsa -f $homedir/.ssh/id_rsa
+    sudo -u $username ssh-keygen -q -N "" -C "" -t e25519 -f $homedir/.ssh/id_e25519
     sudo -u $username ssh-keyscan github.com >> $homedir/.ssh/known_hosts 2> /dev/null
 
     printf "\tDeploying dotfiles...\n"
+    ! [ -d "$homedir/.dotfiles" ] || rm -rf "$homedir/.dotfiles"
     sudo -u $username git -C "$homedir" clone -q --bare $dotfilesrepo $homedir/.dotfiles
     sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ checkout -f
     rm -f LICENSE README.md
@@ -266,12 +268,12 @@ getuserinfo || error "User exited."
 printf "\nThe script will proceed to bootstrap the system fully automated without any more input required from you, this may take some time.\n\nPress any key to continue..."
 read -s -n 1
 
+installrequirements
 adduser || error "Error has occurred while adding/modifying user."
 
 # Use all CPU cores for compilation
 sed -i "s/-j2/-j$(nproc)/;/#MAKEFLAGS/s/^#//" /etc/makepkg.conf
 
-installrequirements
 installaurhelper || error "Failed to install PIKAUR"
 deploydotfiles || error "Failed to deploy .dotfiles"
 installpkglist || error "Failed to install a package, check the logs and try again."
