@@ -178,21 +178,21 @@ installpkglist() {
     pkglist_aur=($(pacman -Slq | comm -32 <(sort $homedir/.config/pkglist.txt) <(sort -)))
 
     printf "\nResolving conflicts...\n"
-    for pkg in $conflicts; do
+    for pkg in ${conflicts[@]}; do
         printf "\tInstalling $pkg... "
         yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
     printf "\nInstalling main packages:\n"
-    for pkg in $pkglist_main; do
+    for pkg in ${pkglist_main[@]]}; do
         printf "\t$pkg... "
         pacman -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
     printf "\nInstalling AUR packages:\n"
-    for pkg in $pkglist_aur; do
+    for pkg in ${pkglist_aur[@]}; do
         printf "\t$pkg... "
         yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
         printf "done.\n"
@@ -223,11 +223,11 @@ configpkgs() {
     systemctl enable cups.socket > /dev/null 2>&1
 
     printf "\tConfiguring MPD...\n"
-    sudo -u $username mkdir "$homedir/.config/mpd/playlists"
+    sudo -u $username mkdir -p "$homedir/.config/mpd/playlists"
     sudo -u $username systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
 
     printf "\tCreating NeoMutt directory...\n"
-    sudo -u $username mkdir "$homedir/dls/email_attachments"
+    sudo -u $username mkdir -p "$homedir/dls/email_attachments"
 
     printf "\tEnabling and configuring Transmission...\n"
     mkdir -p /etc/systemd/system/transmission.service.d/
@@ -241,7 +241,7 @@ configpkgs() {
 configneovim() {
     printf "\nDeploying NeoVim configuration:\n"
 
-    printf "\tInstalling Providers...\n"
+    printf "\tInstalling Language Providers...\n"
     sudo -u $username pip --no-input install -U pynvim > /dev/null 2>&1
     sudo -u $username npm install -g neovim > /dev/null 2>&1
 
@@ -253,7 +253,7 @@ configneovim() {
     sudo -u $username nvim -c "PlugInstall|UpdateRemotePlugins|PlugUpdate|qall"
 
     printf "\tInstalling CocPlugins...\n"
-    for plg in $cocplugins; do
+    for plg in ${cocplugins[@]}; do
         printf "\t\tInstalling coc-$plug...\n"
         sudo -u $username nvim +"CocInstall -sync coc-$plg" +"qall"
     done
@@ -304,7 +304,7 @@ configneovim || error "Failed to deploy neovim configuration."
 printf "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
 
 printf "\nBuilding and installing suckless tools:\n"
-for t in $suckless; do
+for t in ${suckless[@]}; do
     makeinstallsource $t || error "Failed to build and install $t"
 done
 
