@@ -17,6 +17,7 @@
 ### Global Variables ###
 device=0  # 1:PC , 2:Laptop
 requirements=(sudo base-devel git openssh ntp)
+conflicts=(mimi)  # Packages we want to install but causing conflicts
 dotfilesrepo="https://github.com/arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
 cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint)
@@ -170,15 +171,32 @@ deploydotfiles() {
 
 # Install packages from pkglist.txt
 installpkglist() {
-    printf "\nInstalling packages:\n"
+    pkglist_all=(cat "$homedir/.config/pkglist.txt")
 
-    pkglist=$(cat "$homedir/.config/pkglist.txt")
-    sudo -u $username pikaur -S --ignore xdg-utils --noconfirm --needed < $pkglist
-    #for pkg in $pkglist; do
-        #printf "\t$pkg... "
-        #yes p | sudo -u $username pikaur -S --ignore xdg-utils --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
-        #printf "done.\n"
-    #done
+    printf "\nCategorizing packages...\n"  # Will replace with better method
+    pkglist_main=($(pacman -Slq | comm -12 <(sort $homedir/.config/pkglist.txt) <(sort -)))
+    pkglist_aur=($(pacman -Slq | comm -32 <(sort $homedir/.config/pkglist.txt) <(sort -)))
+
+    printf "\nResolving conflicts...\n"
+    for pkg in $conflicts; do
+        printf "\tInstalling $pkg... "
+        yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        printf "done.\n"
+    done
+
+    printf "\nInstalling main packages:\n"
+    for pkg in $pkglist; do
+        printf "\t$pkg... "
+        pacman -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        printf "done.\n"
+    done
+
+    printf "\nInstalling AUR packages:\n"
+    for pkg in $pkglist; do
+        printf "\t$pkg... "
+        yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        printf "done.\n"
+    done
 
     printf "Done installing all packages.\n"
 }
