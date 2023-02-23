@@ -185,20 +185,20 @@ installpkglist() {
     done
 
     printf "\nInstalling main packages:\n"
-    for pkg in $pkglist; do
+    for pkg in $pkglist_main; do
         printf "\t$pkg... "
         pacman -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
     printf "\nInstalling AUR packages:\n"
-    for pkg in $pkglist; do
+    for pkg in $pkglist_aur; do
         printf "\t$pkg... "
         yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
-    printf "Done installing all packages.\n"
+    printf "\nDone installing all packages.\n"
 }
 
 # Configure every package in the list according to its arch wiki page
