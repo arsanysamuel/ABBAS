@@ -155,8 +155,8 @@ deploydotfiles() {
 
     printf "\tConfiguring SSH...\n"
     cd $homedir
-    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t rsa -f $homedir/.ssh/id_rsa
-    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t ed25519 -f $homedir/.ssh/id_ed25519
+    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t rsa -f $homedir/.ssh/id_rsa > /dev/null 2>&1
+    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t ed25519 -f $homedir/.ssh/id_ed25519 > /dev/null 2>&1
     sudo -u $username ssh-keyscan github.com >> $homedir/.ssh/known_hosts 2> /dev/null
 
     printf "\tDeploying dotfiles...\n"
@@ -173,11 +173,12 @@ installpkglist() {
     printf "\nInstalling packages:\n"
 
     pkglist=$(cat "$homedir/.config/pkglist.txt")
-    for pkg in $pkglist; do
-        printf "\t$pkg... "
-        yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
-        printf "done.\n"
-    done
+    sudo -u $username pikaur -S --ignore xdg-utils --noconfirm --needed < $pkglist
+    #for pkg in $pkglist; do
+        #printf "\t$pkg... "
+        #yes p | sudo -u $username pikaur -S --ignore xdg-utils --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        #printf "done.\n"
+    #done
 
     printf "Done installing all packages.\n"
 }
