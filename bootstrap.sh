@@ -185,7 +185,7 @@ installpkglist() {
     done
 
     printf "\nInstalling main packages:\n"
-    for pkg in ${pkglist_main[@]]}; do
+    for pkg in ${pkglist_main[@]}; do
         printf "\t$pkg... "
         pacman -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
         printf "done.\n"
