@@ -6,12 +6,15 @@
 ## License: GNU GPLv3
 
 # TODO: 
-#   1- Change script verbosity (substitute /dev/null and 2>&1 with a variable)
-#   2- Check if passwords are empty
-#   3- Resolve PIKAUR pgp key failures (pacman-key might solve it)
-#   4- Configuration for laptop
-#   5- Flameshot might need autostart file
-#   6- Startup systemd msgs
+#   - Change script verbosity (substitute /dev/null and 2>&1 with a variable)
+#   - Check if passwords are empty
+#   - Configuration for laptop
+#   - Flameshot might need autostart file
+#   - Startup systemd msgs
+#   - use reflector to update mirror list
+#   - Change name to ABBAS
+#   - NeoMutt wizard
+#   - Add StevenBlack hosts to /etc/hosts
 
 
 ### Global Variables ###
@@ -250,12 +253,12 @@ configneovim() {
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim' > /dev/null 2>&1
 
     printf "\tInstalling Plugins...\n"
-    sudo -u $username nvim -c "PlugInstall|UpdateRemotePlugins|PlugUpdate|qall"
+    sudo -u $username nvim -c "messages clear|PlugInstall|UpdateRemotePlugins|PlugUpdate|qall"
 
     printf "\tInstalling CocPlugins...\n"
     for plg in ${cocplugins[@]}; do
         printf "\t\tInstalling coc-$plug...\n"
-        sudo -u $username nvim +"CocInstall -sync coc-$plg" +"qall"
+        sudo -u $username nvim +"messages clear" +"CocInstall -sync coc-$plg" +"qall"
     done
 }
 
@@ -296,10 +299,6 @@ deploydotfiles || error "Failed to deploy .dotfiles"
 installpkglist || error "Failed to install a package, check the logs and try again."
 pacmanconfig
 
-configgit
-configpkgs || error "Failed to configure this package."
-configneovim || error "Failed to deploy neovim configuration."
-
 # Allow dmesg access for all users
 printf "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
 
@@ -307,6 +306,10 @@ printf "\nBuilding and installing suckless tools:\n"
 for t in ${suckless[@]}; do
     makeinstallsource $t || error "Failed to build and install $t"
 done
+
+configgit
+configpkgs || error "Failed to configure this package."
+configneovim || error "Failed to deploy neovim configuration."
 
 finalize
 
