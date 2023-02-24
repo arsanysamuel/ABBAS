@@ -23,7 +23,7 @@ requirements=(sudo base-devel git openssh ntp)
 conflicts=(mimi)  # Packages we want to install but causing conflicts
 dotfilesrepo="https://github.com/arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
-cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint)
+cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint htmldjango)
 
 
 # Error handler function
