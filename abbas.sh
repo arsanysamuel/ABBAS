@@ -9,7 +9,6 @@
 #   - Change script verbosity (substitute /dev/null and 2>&1 with STDOUT)
 #   - Configuration for laptop
 #   - use reflector to update mirror list
-#   - Change name to ABBAS
 #   - NeoMutt config
 
 
@@ -30,16 +29,17 @@ error() {
 
 # Welcome message
 welcome() {
-    printf "\nStarting Arch Linux Bootstrapping Script...\nBy: Arsany Samuel.\n"
+    printf "\nStarting ABBAS...\n"
     printf "\nThe script will do the following:\n\t1- Add a new user account (or modify if existing).\n\t2- Install AUR helper.\n\t3- Install packages.\n\t4- Configure packages and deploy dotfiles.\n\n"
     read -p "Do you wish to continue [Y/n]? "
     [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || return 1
 
-    while ! [ "$device" -eq 1 ] || [ "$device" -eq 2 ] 2> /dev/null
-    do
-        printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
-        read -r device
-    done
+    # Unneeded for now
+    #while ! [ "$device" -eq 1 ] || [ "$device" -eq 2 ] 2> /dev/null
+    #do
+        #printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
+        #read -r device
+    #done
 }
 
 # Prompt for user
