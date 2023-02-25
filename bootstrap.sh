@@ -34,9 +34,9 @@ welcome() {
     printf "\nStarting Arch Linux Bootstrapping Script...\nBy: Arsany Samuel.\n"
     printf "\nThe script will do the following:\n\t1- Add a new user account (or modify if existing).\n\t2- Install AUR helper.\n\t3- Install packages.\n\t4- Configure packages and deploy dotfiles.\n\n"
     read -p "Do you wish to continue [Y/n]? "
-    [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] || return 1
+    [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || return 1
 
-    while ! [ $device -eq 1 -o $device -eq 2 ] 2> /dev/null
+    while ! [ "$device" -eq 1 ] || [ "$device" -eq 2 ] 2> /dev/null
     do
         printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
         read -r device
@@ -57,7 +57,7 @@ getuserinfo() {
     # Getting password
     printf "Password: "
     read -s pass
-    while ! [ -n "$pass" ]; do
+    while [ -z "$pass" ]; do
         printf "\nThe password is empty, try again.\n"
         printf "Password: "
         read -s pass
@@ -65,7 +65,7 @@ getuserinfo() {
     printf "\nRetype password: "
     read -s repass
 
-    while ! [ "$pass" == "$repass" ]; do
+    while ! [ "$pass" = "$repass" ]; do
         printf "\nPasswords don't match, try again.\n"
         printf "Password: "
         read -s pass
@@ -75,10 +75,10 @@ getuserinfo() {
     unset repass
 
     # Check if user exists
-    id -u $username > /dev/null 2>&1 && {
+    id -u "$username" > /dev/null 2>&1 && {
         printf "\n\nThis user already exists, the script will continue running and will overwrite any current config files, also will set the new password to the current user.\n"
         read -p "Do you wish to continue [Y/n]? "
-        [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] || return 1
+        [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || return 1
     }
     echo  # Resolves a bug for some reason
 }
@@ -91,9 +91,9 @@ installrequirements() {
     pacman-key --populate archlinux > /dev/null 2>&1
 
     printf "\nInstalling requirements:\n"
-    for pkg in ${requirements[@]}; do
+    for pkg in "${requirements[@]}"; do
         printf "\t$pkg\n"
-        pacman -S --noconfirm --needed $pkg > /dev/null 2>&1
+        pacman -S --noconfirm --needed "$pkg" > /dev/null 2>&1
     done
 
     printf "\nConfiguring time using NTP...\n"
@@ -116,8 +116,8 @@ adduser() {
     sed -i "/wheel.*NOPASSWD/s/#\ //" /etc/sudoers || return 1  # Could do with awk
 
     printf "\tCreating home directory folders...\n"
-    chown "$username":wheel $homedir > /dev/null 2>&1
-    sudo -u $username mkdir -p $homedir/dls/ $homedir/docs/ $homedir/unsorted $homedir/torrents/incomplete
+    chown "$username":wheel "$homedir" > /dev/null 2>&1
+    sudo -u "$username" mkdir -p "$homedir"/dls/ "$homedir"/docs/ "$homedir"/unsorted "$homedir"/torrents/incomplete
 }
 
 # Pacman edit configuration
@@ -138,21 +138,21 @@ pacmanconfig() {
 installaurhelper() {
     printf "\nInstalling PIKAUR...\n"
     [ -d "$homedir/pikaur" ] && rm -rf "$homedir/pikaur"
-    sudo -u $username git -C "$homedir" clone -q --depth 1 --no-tags https://aur.archlinux.org/pikaur.git || { printf "Couldn't clone the repo\n"; return 1; }
-    cd $homedir/pikaur
-    sudo -u $username makepkg -fsricC --noconfirm --needed > /dev/null 2>&1 || { printf "PIKAUR failed to compile and install\n"; return 1; }
-    rm -rf $homedir/pikaur
+    sudo -u "$username" git -C "$homedir" clone -q --depth 1 --no-tags https://aur.archlinux.org/pikaur.git || { printf "Couldn't clone the repo\n"; return 1; }
+    cd "$homedir/pikaur" || return 1
+    sudo -u "$username" makepkg -fsricC --noconfirm --needed > /dev/null 2>&1 || { printf "PIKAUR failed to compile and install\n"; return 1; }
+    rm -rf "$homedir"/pikaur
 
     # Adding TOR browser pgp key (will resolve later)
-    sudo -u $username gpg --keyserver keys.openpgp.org --recv-keys E53D989A9E2D47BF > /dev/null 2>&1
+    sudo -u "$username" gpg --keyserver keys.openpgp.org --recv-keys E53D989A9E2D47BF > /dev/null 2>&1
 }
 
 # Configure git globally
 configgit() {
-    sudo -u $username git config --global merge.tool nvimdiff
-    sudo -u $username git config --global merge.conflictstyle diff3
-    sudo -u $username git config --global mergetool.prompt false
-    sudo -u $username git config --global color.ui auto
+    sudo -u "$username" git config --global merge.tool nvimdiff
+    sudo -u "$username" git config --global merge.conflictstyle diff3
+    sudo -u "$username" git config --global mergetool.prompt false
+    sudo -u "$username" git config --global color.ui auto
 }
 
 # Deploy Dotfiles
@@ -160,46 +160,44 @@ deploydotfiles() {
     printf "\nDeploying dotfiles:\n"
 
     printf "\tConfiguring SSH...\n"
-    cd $homedir
-    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t rsa -f $homedir/.ssh/id_rsa > /dev/null 2>&1
-    yes | sudo -u $username ssh-keygen -q -N "" -C "" -t ed25519 -f $homedir/.ssh/id_ed25519 > /dev/null 2>&1
-    sudo -u $username ssh-keyscan github.com >> $homedir/.ssh/known_hosts 2> /dev/null
+    cd "$homedir" || return 1
+    yes | sudo -u "$username" ssh-keygen -q -N "" -C "" -t rsa -f "$homedir"/.ssh/id_rsa > /dev/null 2>&1
+    yes | sudo -u "$username" ssh-keygen -q -N "" -C "" -t ed25519 -f "$homedir"/.ssh/id_ed25519 > /dev/null 2>&1
+    sudo -u "$username" ssh-keyscan github.com >> "$homedir"/.ssh/known_hosts 2> /dev/null
 
     printf "\tDeploying dotfiles...\n"
     ! [ -d "$homedir/.dotfiles" ] || rm -rf "$homedir/.dotfiles"
-    sudo -u $username git -C "$homedir" clone -q --bare $dotfilesrepo $homedir/.dotfiles
-    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ checkout -f
+    sudo -u "$username" git -C "$homedir" clone -q --bare "$dotfilesrepo" "$homedir"/.dotfiles
+    sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" checkout -f
     rm -f LICENSE README.md
-    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ update-index --skip-worktree -q LICENSE README.md
-    sudo -u $username git -C "$homedir" --work-tree=$homedir --git-dir=$homedir/.dotfiles/ config --local status.showUntrackedFiles no
+    sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" update-index --skip-worktree -q LICENSE README.md
+    sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" config --local status.showUntrackedFiles no
 }
 
 # Install packages from pkglist.txt
 installpkglist() {
-    pkglist_all=(cat "$homedir/.config/pkglist.txt")
-
     printf "\nCategorizing packages...\n"  # Will replace with better method
-    pkglist_main=($(pacman -Slq | comm -12 <(sort $homedir/.config/pkglist.txt) <(sort -)))
-    pkglist_aur=($(pacman -Slq | comm -32 <(sort $homedir/.config/pkglist.txt) <(sort -)))
+    pkglist_main=($(pacman -Slq | comm -12 <(sort "$homedir/.config/pkglist.txt") <(sort -)))
+    pkglist_aur=($(pacman -Slq | comm -32 <(sort "$homedir/.config/pkglist.txt") <(sort -)))
 
     printf "\nResolving conflicts...\n"
-    for pkg in ${conflicts[@]}; do
+    for pkg in "${conflicts[@]}"; do
         printf "\tInstalling $pkg... "
-        yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        yes p | sudo -u "$username" pikaur -S --noconfirm --needed "$pkg" > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
     printf "\nInstalling main packages:\n"
-    for pkg in ${pkglist_main[@]}; do
+    for pkg in "${pkglist_main[@]}"; do
         printf "\t$pkg... "
-        pacman -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        pacman -S --noconfirm --needed "$pkg" > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
     printf "\nInstalling AUR packages:\n"
-    for pkg in ${pkglist_aur[@]}; do
+    for pkg in "${pkglist_aur[@]}"; do
         printf "\t$pkg... "
-        yes p | sudo -u $username pikaur -S --noconfirm --needed $pkg > /dev/null 2>&1 || return 1
+        yes p | sudo -u "$username" pikaur -S --noconfirm --needed "$pkg" > /dev/null 2>&1 || return 1
         printf "done.\n"
     done
 
@@ -212,10 +210,10 @@ configpkgs() {
 
     printf "\tInstalling GRUB Theme...\n"
     [ -d "$homedir/grub2-theme-vimix" ] && rm -rf "$homedir/grub2-theme-vimix"
-    sudo -u $username git -C "$homedir" clone -q https://github.com/Se7endAY/grub2-theme-vimix.git
+    sudo -u "$username" git -C "$homedir" clone -q https://github.com/Se7endAY/grub2-theme-vimix.git
     mkdir -p /boot/grub/themes/ || return 1
     cp -r grub2-theme-vimix/Vimix/ /boot/grub/themes/
-    rm -rf $homedir/grub2-theme-vimix
+    rm -rf "$homedir/grub2-theme-vimix"
     printf "\n# User added config\nGRUB_DISABLE_OS_PROBER=false  # detect all OSes\n#GRUB_GFXMODE=1024x768x32  # setting grub resolution\n#GRUB_BACKGROUND='/path/to/wallpaper'\nGRUB_THEME='/boot/grub/themes/Vimix/theme.txt'\nGRUB_COLOR_NORMAL='light-blue/black'\nGRUB_COLOR_HIGHLIGHT='light-cyan/blue'" >> /etc/default/grub
     sed -i "s/^GRUB_TERMINAL_OUTPUT/#GRUB_TERMINAL_OUTPUT/" /etc/default/grub 
     grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1 || return 1
@@ -228,11 +226,11 @@ configpkgs() {
     systemctl enable cups.socket > /dev/null 2>&1
 
     printf "\tConfiguring MPD...\n"
-    sudo -u $username mkdir -p "$homedir/.config/mpd/playlists"
-    sudo -u $username systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
+    sudo -u "$username" mkdir -p "$homedir/.config/mpd/playlists"
+    sudo -u "$username" systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
 
     printf "\tCreating NeoMutt directory...\n"
-    sudo -u $username mkdir -p "$homedir/dls/email_attachments"
+    sudo -u "$username" mkdir -p "$homedir/dls/email_attachments"
 
     printf "\tEnabling and configuring Transmission...\n"
     mkdir -p /etc/systemd/system/transmission.service.d/
@@ -247,20 +245,20 @@ configneovim() {
     printf "\nDeploying NeoVim configuration:\n"
 
     printf "\tInstalling Language Providers...\n"
-    sudo -u $username pip --no-input install -U pynvim > /dev/null 2>&1
-    sudo -u $username npm install -g neovim > /dev/null 2>&1
+    sudo -u "$username" pip --no-input install -U pynvim > /dev/null 2>&1
+    sudo -u "$username" npm install -g neovim > /dev/null 2>&1
 
     printf "\tInstalling VimPlug...\n"
-    sudo -u $username sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+    sudo -u "$username" sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim' > /dev/null 2>&1
 
     printf "\tInstalling Plugins...\n"
-    sudo -u $username nvim -c "messages clear|PlugInstall|UpdateRemotePlugins|PlugUpdate|qall"
+    sudo -u "$username" nvim -c "messages clear|PlugInstall|UpdateRemotePlugins|PlugUpdate|qall"
 
     printf "\tInstalling CocPlugins...\n"
-    for plg in ${cocplugins[@]}; do
-        printf "\t\tInstalling coc-$plug...\n"
-        sudo -u $username nvim +"messages clear" +"CocInstall -sync coc-$plg" +"qall"
+    for plg in "${cocplugins[@]}"; do
+        printf "\t\tInstalling coc-$plg...\n"
+        sudo -u "$username" nvim +"messages clear" +"CocInstall -sync coc-$plg" +"qall"
     done
 }
 
@@ -268,9 +266,9 @@ configneovim() {
 makeinstallsource() {
     printf "\t$1...\n"
     repo="https://github.com/arsanysamuel/$1.git"
-    sudo -u $username git -C "$homedir/.config" clone -q --depth 1 --single-branch --no-tags $repo
-    cd $homedir/.config/$1
-    sudo -u $username make > /dev/null 2>&1 || return 1
+    sudo -u "$username" git -C "$homedir/.config" clone -q --depth 1 --single-branch --no-tags "$repo"
+    cd "$homedir/.config/$1" || return 1
+    sudo -u "$username" make > /dev/null 2>&1 || return 1
     make clean install > /dev/null 2>&1 || return 1
 }
 
@@ -278,7 +276,7 @@ makeinstallsource() {
 finalize() {
     printf "\nBootstrapping script has completed successfully, provided there were no hidden errors.\nAll packages have been installed and configured, please reboot the system to complete the installation.\n\nDo you want to reboot now [Y/n]? "
     read -r
-    ! [[ -z "$REPLY" || "$REPLY" == "y" || "$REPLY" == "Y" ]] || reboot
+    ! [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || reboot
 }
 
 
@@ -305,8 +303,8 @@ pacmanconfig
 printf "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
 
 printf "\nBuilding and installing suckless tools:\n"
-for t in ${suckless[@]}; do
-    makeinstallsource $t || error "Failed to build and install $t"
+for t in "${suckless[@]}"; do
+    makeinstallsource "$t" || error "Failed to build and install $t"
 done
 
 configgit
