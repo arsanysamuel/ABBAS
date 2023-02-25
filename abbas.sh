@@ -171,6 +171,9 @@ deploydotfiles() {
     rm -f LICENSE README.md
     sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" update-index --skip-worktree -q LICENSE README.md
     sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" config --local status.showUntrackedFiles no
+    sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" remote remove origin
+    httptossh $dotfilesrepo | xargs sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" remote add origin
+    sudo -u "$username" git -C "$homedir" --work-tree="$homedir" --git-dir="$homedir/.dotfiles/" push -q -u origin master
 }
 
 # Install packages from pkglist.txt
@@ -228,6 +231,7 @@ configpkgs() {
     printf "\tConfiguring MPD...\n"
     sudo -u "$username" mkdir -p "$homedir/.config/mpd/playlists"
     sudo -u "$username" systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
+    sudo -u "$username" systemctl --user start mpd.service > /dev/null 2>&1 
 
     printf "\tCreating NeoMutt directory...\n"
     sudo -u "$username" mkdir -p "$homedir/dls/email_attachments"
@@ -270,6 +274,11 @@ makeinstallsource() {
     cd "$homedir/.config/$1" || return 1
     sudo -u "$username" make > /dev/null 2>&1 || return 1
     make clean install > /dev/null 2>&1 || return 1
+
+    # Convert remote url to ssh
+    sudo -u "$username" git remote remove origin
+    httptossh $repo | xargs sudo -u "$username" git remote add origin
+    sudo -u "$username" git push -q -u origin master
 }
 
 # Finalize installation
@@ -277,6 +286,11 @@ finalize() {
     printf "\nBootstrapping script has completed successfully, provided there were no hidden errors.\nAll packages have been installed and configured, please reboot the system to complete the installation.\n\nDo you want to reboot now [Y/n]? "
     read -r
     ! [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || reboot
+}
+
+# Convert github http url to ssh
+httptossh() {
+    echo $1 | sed -e "s/https:\/\//git@/" -e "s/\//:/"
 }
 
 
