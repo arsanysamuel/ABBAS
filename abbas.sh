@@ -235,8 +235,11 @@ configpkgs() {
     sudo -u "$username" systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
     sudo -u "$username" systemctl --user start mpd.service > /dev/null 2>&1 
 
-    printf "\tCreating NeoMutt directory...\n"
+    printf "\tCreating NeoMutt directory... (see the config file to configure passwords)\n"
     sudo -u "$username" mkdir -p "$homedir/dls/email_attachments"
+
+    printf "\tCreating Newsboat cache file...\n"
+    sudo -u "$username" mkdir -p "$homedir/.cache/newsboat"
 
     printf "\tEnabling and configuring Transmission...\n"
     mkdir -p /etc/systemd/system/transmission.service.d/
