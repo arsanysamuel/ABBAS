@@ -230,6 +230,8 @@ configpkgs() {
 
     printf "\tConfiguring MPD...\n"
     sudo -u "$username" mkdir -p "$homedir/.config/mpd/playlists"
+    sudo -u "$username" mkdir -p "$homedir/music"
+    echo "Replace this dir with a symbolic link to your music directory then do $ mpc update" > "$homedir/music/readme"
     sudo -u "$username" systemctl --user enable mpd.service > /dev/null 2>&1  # might try mpd.socket later
     sudo -u "$username" systemctl --user start mpd.service > /dev/null 2>&1 
 
