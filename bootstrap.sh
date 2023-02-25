@@ -8,10 +8,9 @@
 # TODO: 
 #   - Change script verbosity (substitute /dev/null and 2>&1 with STDOUT)
 #   - Configuration for laptop
-#   - Startup systemd msgs
 #   - use reflector to update mirror list
 #   - Change name to ABBAS
-#   - NeoMutt wizard
+#   - NeoMutt config
 
 
 ### Global Variables ###
@@ -216,6 +215,7 @@ configpkgs() {
     rm -rf "$homedir/grub2-theme-vimix"
     printf "\n# User added config\nGRUB_DISABLE_OS_PROBER=false  # detect all OSes\n#GRUB_GFXMODE=1024x768x32  # setting grub resolution\n#GRUB_BACKGROUND='/path/to/wallpaper'\nGRUB_THEME='/boot/grub/themes/Vimix/theme.txt'\nGRUB_COLOR_NORMAL='light-blue/black'\nGRUB_COLOR_HIGHLIGHT='light-cyan/blue'" >> /etc/default/grub
     sed -i "s/^GRUB_TERMINAL_OUTPUT/#GRUB_TERMINAL_OUTPUT/" /etc/default/grub 
+    sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT/s/quiet//" /etc/default/grub
     grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1 || return 1
 
     printf "\tEnabling NetworkManager...\n"
