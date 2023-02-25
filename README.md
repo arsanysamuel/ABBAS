@@ -1,4 +1,7 @@
-# arch-bootstrapper
+# ABBAS
+
+<b>A</b>rch <b>B</b>ootstrapper <b>B</b>y <b>A</b>rsany <b>S</b>amuel
+
 Bootstrapping script for a fresh Arch Linux installation.
 
 ### Usage
@@ -7,7 +10,7 @@ Bootstrapping script for a fresh Arch Linux installation.
 3. Configure Network by following the [network configuration](https://wiki.archlinux.org/title/Network_configuration) wiki page, using `NetworkManager` is recommended.
 4. Start the script as root user with the following command:
     ```
-    curl -LO "https://raw.githubusercontent.com/arsanysamuel/arch-bootstrapper/main/bootstrap.sh" &&
+    curl -LO https://raw.githubusercontent.com/arsanysamuel/arch-bootstrapper/main/bootstrap.sh &&
     sh bootstrap.sh
     ```
 5. (Optional) Add configuration for your laptop (if running on a laptop) using this [wiki page](https://wiki.archlinux.org/title/Laptop).
@@ -23,4 +26,4 @@ Bootstrapping script for a fresh Arch Linux installation.
 - [LARBS](https://larbs.xyz/)
 
 
-***Disclaimer:*** This script was intended for my personal use to install my package list and deploy my configuration files and builds, if you're looking for more general purpose script try using [LARBS](https://larbs.xyz/) as it supports bootstrapping with other package lists and repos, and this script was inspired by it.
+***Disclaimer:*** This script was intended for my personal use to install my package list, deploy my configuration files and builds, if you're looking for more general usage try using [LARBS](https://larbs.xyz/) as it supports bootstrapping with different package list and dotfiles repo.
