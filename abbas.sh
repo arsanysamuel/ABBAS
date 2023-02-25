@@ -130,7 +130,7 @@ pacmanconfig() {
     sed -i "/ParallelDownloads/s/#//" /etc/pacman.conf
 
     # Enabling cache weekly cleaning service
-    systemctl enable paccache.timer
+    systemctl enable paccache.timer > /dev/null 2>&1
 }
 
 # Install AUR helper (PIKAUR)
@@ -211,7 +211,7 @@ configpkgs() {
     [ -d "$homedir/grub2-theme-vimix" ] && rm -rf "$homedir/grub2-theme-vimix"
     sudo -u "$username" git -C "$homedir" clone -q https://github.com/Se7endAY/grub2-theme-vimix.git
     mkdir -p /boot/grub/themes/ || return 1
-    cp -r grub2-theme-vimix/Vimix/ /boot/grub/themes/
+    cp -r "$homedir/grub2-theme-vimix/Vimix/" "/boot/grub/themes/"
     rm -rf "$homedir/grub2-theme-vimix"
     printf "\n# User added config\nGRUB_DISABLE_OS_PROBER=false  # detect all OSes\n#GRUB_GFXMODE=1024x768x32  # setting grub resolution\n#GRUB_BACKGROUND='/path/to/wallpaper'\nGRUB_THEME='/boot/grub/themes/Vimix/theme.txt'\nGRUB_COLOR_NORMAL='light-blue/black'\nGRUB_COLOR_HIGHLIGHT='light-cyan/blue'" >> /etc/default/grub
     sed -i "s/^GRUB_TERMINAL_OUTPUT/#GRUB_TERMINAL_OUTPUT/" /etc/default/grub 
