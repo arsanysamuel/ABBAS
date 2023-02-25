@@ -6,15 +6,12 @@
 ## License: GNU GPLv3
 
 # TODO: 
-#   - Change script verbosity (substitute /dev/null and 2>&1 with a variable)
-#   - Check if passwords are empty
+#   - Change script verbosity (substitute /dev/null and 2>&1 with STDOUT)
 #   - Configuration for laptop
-#   - Flameshot might need autostart file
 #   - Startup systemd msgs
 #   - use reflector to update mirror list
 #   - Change name to ABBAS
 #   - NeoMutt wizard
-#   - Add StevenBlack hosts to /etc/hosts
 
 
 ### Global Variables ###
@@ -60,9 +57,14 @@ getuserinfo() {
     # Getting password
     printf "Password: "
     read -s pass
+    while ! [ -n "$pass" ]; do
+        printf "\nThe password is empty, try again.\n"
+        printf "Password: "
+        read -s pass
+    done
     printf "\nRetype password: "
     read -s repass
-    #while ! [ -n $pass ] && [ -n $repass ] || [ "$pass" == "$repass" ]; do  # TODO
+
     while ! [ "$pass" == "$repass" ]; do
         printf "\nPasswords don't match, try again.\n"
         printf "Password: "
@@ -310,6 +312,9 @@ done
 configgit
 configpkgs || error "Failed to configure this package."
 configneovim || error "Failed to deploy neovim configuration."
+
+printf "\nAdding StevenBlack list to /etc/hosts...\n"
+curl -s http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts > /etc/hosts
 
 finalize
 
