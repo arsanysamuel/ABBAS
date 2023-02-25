@@ -10,7 +10,7 @@ Bootstrapping script for a fresh Arch Linux installation.
 3. Configure Network by following the [network configuration](https://wiki.archlinux.org/title/Network_configuration) wiki page, using `NetworkManager` is recommended.
 4. Start the script as root user with the following command:
     ```
-    curl -LO https://raw.githubusercontent.com/arsanysamuel/arch-bootstrapper/main/bootstrap.sh &&
+    curl -LO https://raw.githubusercontent.com/arsanysamuel/ABBAS/main/abbas.sh &&
     sh bootstrap.sh
     ```
 5. (Optional) Add configuration for your laptop (if running on a laptop) using this [wiki page](https://wiki.archlinux.org/title/Laptop).
