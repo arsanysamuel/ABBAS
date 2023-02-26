@@ -13,7 +13,7 @@ Bootstrapping script for a fresh Arch Linux installation.
     curl -LO https://raw.githubusercontent.com/arsanysamuel/ABBAS/main/abbas.sh &&
     sh bootstrap.sh
     ```
-5. (Optional) Add configuration for your laptop (if running on a laptop) using this [wiki page](https://wiki.archlinux.org/title/Laptop).
+5. (Optional) Add configuration for your laptop (if running on a laptop) using this [wiki page](https://wiki.archlinux.org/title/Laptop), you might need some extra manual configuration per laptop model for GPU, audio, etc..
 
 
 ### Resources
