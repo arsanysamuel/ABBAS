@@ -19,6 +19,7 @@ conflicts=(mimi)  # Packages we want to install but causing conflicts
 dotfilesrepo="https://github.com/arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
 cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint htmldjango)
+laptoppkgs=(acpi xorg-xinput bluez bluez-utils libinput)
 
 
 # Error handler function
@@ -34,12 +35,11 @@ welcome() {
     read -p "Do you wish to continue [Y/n]? "
     [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || return 1
 
-    # Unneeded for now
-    #while ! [ "$device" -eq 1 ] || [ "$device" -eq 2 ] 2> /dev/null
-    #do
-        #printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
-        #read -r device
-    #done
+    while ! [ "$device" -eq 1 ] || [ "$device" -eq 2 ] 2> /dev/null
+    do
+        printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
+        read -r device
+    done
 }
 
 # Prompt for user
@@ -286,6 +286,29 @@ makeinstallsource() {
     sudo -u "$username" git push -q -u origin master
 }
 
+# Configure system for laptop device
+configlaptop() {
+    printf "\nConfiguring for laptop devices:\n"
+
+    printf "\tInstalling requirements...\n"
+    for pkg in "${laptoppkgs[@]}"; do
+        pacman -S --noconfirm --needed "$pkg" > /dev/null 2>&1
+    done
+
+    printf "\tConfiguring status bar...\n"
+    sed -i "s/dwmstatus/dwmlaptopstatus/" "$homedir/.xprofile"
+
+    printf "\tAdding hibernate on low battery...\n"
+    printf "# Suspend the system when battery level drops to 5% or lower\nSUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"[0-5]\", RUN+=\"/usr/bin/systemctl hibernate\"" > "/etc/udev/rules.d/99-lowbat.rules"
+
+    printf "\tConfiguring Touchpad and Trackpoint...\n"
+    [ ! -f /etc/X11/xorg.conf.d/40-libinput.conf ] && printf "Section \"InputClass\"\nIdentifier \"libinput touchpad catchall\"\nMatchIsTouchpad \"on\"\nMatchDevicePath \"/dev/input/event*\"\nDriver \"libinput\"\n# Enable left mouse button by tapping\nOption \"Tapping\" \"on\"\nEndSection" >/etc/X11/xorg.conf.d/40-libinput.conf
+
+    printf "\tConfiguring bluetooth...\n"
+    systemctl enable bluetooth.service > /dev/null 2>&1
+    systemctl start bluetooth.service > /dev/null 2>&1
+}
+
 # Finalize installation
 finalize() {
     printf "\nBootstrapping script has completed successfully, provided there were no hidden errors.\nAll packages have been installed and configured, please reboot the system to complete the installation.\n\nDo you want to reboot now [Y/n]? "
@@ -332,6 +355,10 @@ configneovim || error "Failed to deploy neovim configuration."
 
 printf "\nAdding StevenBlack list to /etc/hosts...\n"
 curl -s http://sbc.io/hosts/alternates/fakenews-gambling-porn/hosts > /etc/hosts
+
+[ "$device" -eq 2 ] && {
+    configlaptop || error "Failed to deploy laptop configuration."
+}
 
 finalize
 
