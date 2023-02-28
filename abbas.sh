@@ -7,8 +7,6 @@
 
 # TODO: 
 #   - Change script verbosity (substitute /dev/null and 2>&1 with STDOUT)
-#   - Configuration for laptop
-#   - use reflector to update mirror list
 #   - NeoMutt config
 
 
