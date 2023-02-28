@@ -224,6 +224,9 @@ configpkgs() {
     printf "\tEnabling NetworkManager...\n"
     systemctl enable NetworkManager.service > /dev/null 2>&1
 
+    printf "\tCreating local directorires...\n"
+    sudo -u "$username" mkdir "$homedir/.local/share/bash"
+
     printf "\tEnabling CUPS socket for printing...\n"
     systemctl disable cups.service > /dev/null 2>&1
     systemctl enable cups.socket > /dev/null 2>&1
@@ -307,6 +310,9 @@ configlaptop() {
     printf "\tConfiguring bluetooth...\n"
     systemctl enable bluetooth.service > /dev/null 2>&1
     systemctl start bluetooth.service > /dev/null 2>&1
+
+    printf "\tConfiguring brightness control for wheel group...\n"
+    printf 'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp wheel $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"'
 }
 
 # Finalize installation
