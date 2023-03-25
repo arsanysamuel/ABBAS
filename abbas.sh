@@ -222,6 +222,9 @@ configpkgs() {
     printf "\tEnabling NetworkManager...\n"
     systemctl enable NetworkManager.service > /dev/null 2>&1
 
+    printf "\tEnabling Avahi...\n"
+    systemctl enable avahi-daemon.service > /dev/null 2>&1
+
     printf "\tCreating local directorires...\n"
     sudo -u "$username" mkdir "$homedir/.local/share/bash"
 
