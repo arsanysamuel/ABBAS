@@ -17,7 +17,7 @@ conflicts=(mimi)  # Packages we want to install but causing conflicts
 dotfilesrepo="https://github.com/arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
 cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint htmldjango)
-laptoppkgs=(acpi xorg-xinput bluez bluez-utils libinput)
+laptoppkgs=(acpi xorg-xinput bluez bluez-utils libinput cameractrls)
 
 
 # Error handler function
