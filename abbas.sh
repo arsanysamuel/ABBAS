@@ -17,7 +17,7 @@ conflicts=(mimi)  # Packages we want to install but causing conflicts
 dotfilesrepo="https://github.com/arsanysamuel/dotfiles.git"
 suckless=(dwm dmenu st)
 cocplugins=(html css json pyright lua vimtex sh tsserver json snippets markdownlint htmldjango)
-laptoppkgs=(acpi xorg-xinput bluez bluez-utils libinput cameractrls)
+laptoppkgs=(acpi acpid xorg-xinput bluez bluez-utils libinput cameractrls)
 
 
 # Error handler function
@@ -311,6 +311,10 @@ configlaptop() {
     printf "\tConfiguring bluetooth...\n"
     systemctl enable bluetooth.service > /dev/null 2>&1
     systemctl start bluetooth.service > /dev/null 2>&1
+
+    printf "\tEnabling ACPID...\n"
+    systemctl enable acpid.serivce
+    systemctl start acpid.serivce
 
     printf "\tConfiguring brightness control for wheel group...\n"
     printf 'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp wheel $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"'
