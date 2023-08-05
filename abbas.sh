@@ -33,7 +33,7 @@ welcome() {
     read -p "Do you wish to continue [Y/n]? "
     [[ -z "$REPLY" || "$REPLY" = "y" || "$REPLY" = "Y" ]] || return 1
 
-    while ! [ "$device" -eq 1 ] || [ "$device" -eq 2 ] 2> /dev/null
+    while [[ "$device" -ne 1 ]] && [[ "$device" -ne 2 ]] 2> /dev/null
     do
         printf "\nYou are using this script on:\n\t1- PC\n\t2- Laptop\nChoose: "
         read -r device
