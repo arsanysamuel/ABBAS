@@ -227,6 +227,9 @@ configpkgs() {
     systemctl disable systemd-resolved.service > /dev/null 2>&1
     sed -i "/^hosts/s/\(mymachines\)/\1\ mdns_minimal\ \[NOTFOUND\=return\]/" /etc/nsswitch.conf 
 
+    printf "\tAdding keyboard X11 config rule...\n"
+    [ ! -f /etc/X11/xorg.conf.d/00-keyboard.conf ] && printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"us,ara\"\n\tOption \"XkbOptions\" \"grp:win_space_toggle,caps:swapescape\"\nEndSection" > /etc/X11/xorg.conf.d/00-keyboard.conf
+
     printf "\tCreating local directorires...\n"
     sudo -u "$username" mkdir "$homedir/.local/share/bash"
 
@@ -308,7 +311,7 @@ configlaptop() {
     printf "# Suspend the system when battery level drops to 5% or lower\nSUBSYSTEM==\"power_supply\", ATTR{status}==\"Discharging\", ATTR{capacity}==\"[0-5]\", RUN+=\"/usr/bin/systemctl hibernate\"" > "/etc/udev/rules.d/99-lowbat.rules"
 
     printf "\tConfiguring Touchpad and Trackpoint...\n"
-    [ ! -f /etc/X11/xorg.conf.d/40-libinput.conf ] && printf "Section \"InputClass\"\nIdentifier \"libinput touchpad catchall\"\nMatchIsTouchpad \"on\"\nMatchDevicePath \"/dev/input/event*\"\nDriver \"libinput\"\n# Enable left mouse button by tapping\nOption \"Tapping\" \"on\"\nEndSection" >/etc/X11/xorg.conf.d/40-libinput.conf
+    [ ! -f /etc/X11/xorg.conf.d/40-libinput.conf ] && printf "Section \"InputClass\"\n\tIdentifier \"libinput touchpad catchall\"\n\tMatchIsTouchpad \"on\"\n\tMatchDevicePath \"/dev/input/event*\"\n\tDriver \"libinput\"\n\t# Enable left mouse button by tapping\n\tOption \"Tapping\" \"on\"\nEndSection" > /etc/X11/xorg.conf.d/40-libinput.conf
 
     printf "\tConfiguring bluetooth...\n"
     systemctl enable bluetooth.service > /dev/null 2>&1
